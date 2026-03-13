@@ -40,7 +40,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { uvData } from '@/data/mock'
-import { location as sharedLocation } from '@/store/location'
+import { location as sharedLocation } from '@/stores/location'
 import ClothingRecommendations from '@/components/clothing/ClothingRecommendations.vue'
 import SunscreenRecommendation from '@/components/clothing/SunscreenRecommendation.vue'
 import AIDayPlanner from '@/components/clothing/AIDayPlanner.vue'

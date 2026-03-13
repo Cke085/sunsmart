@@ -31,7 +31,7 @@
   
 <script setup>
 import { computed } from 'vue'
-import ClothingCard from './clothingCard.vue'
+import ClothingCard from './ClothingCard.vue'
 import { clothingItems } from '@/data/clothing'
 
 const props = defineProps({

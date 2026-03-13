@@ -127,7 +127,7 @@
 import { ref, computed } from 'vue'
 import { uvData } from '@/data/mock'
 import { getSunburnInfo } from '@/data/sunburn'
-import { location as sharedLocation, setLocation } from '@/store/location'
+import { location as sharedLocation, setLocation } from '@/stores/location'
 import UVScaleBar from '@/components/uv/UVScaleBar.vue'
 import UVAlertBar from '@/components/uv/UVAlertBar.vue'
 import UVNotificationBanner from '@/components/uv/UVNotificationBanner.vue'
