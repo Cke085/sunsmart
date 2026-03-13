@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melbourne Skin Cancer & UV Dashboard</title>
+
+  <!-- Load Chart.js from CDN for drawing charts -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ========== PAGE HEADER ========== -->
+  <header>
+    <div class="header-inner">
+      <div class="header-title">
+        <span class="sun-icon">☀</span>
+        <div>
+          <h1>Melbourne UV & Skin Cancer</h1>
+          <p class="subtitle">Victoria Historical Data Dashboard</p>
+        </div>
+      </div>
+      <div class="header-stats" id="headerStats">
+        <!-- Key stats will be injected here by JavaScript -->
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main>
+
+    <!-- ---- ROW 1: UV Trend over years ---- -->
+    <section class="card wide">
+      <div class="card-header">
+        <h2>Annual Average UV Index — Melbourne (2007–2024)</h2>
+        <div class="legend">
+          <span class="dot uv"></span> Yearly Average Max UV
+        </div>
+      </div>
+      <!-- Canvas element: Chart.js draws the chart here -->
+      <canvas id="uvTrendChart"></canvas>
+    </section>
+
+    <!-- ---- ROW 2: UV monthly heatmap ---- -->
+    <section class="card wide">
+      <div class="card-header">
+        <h2>Monthly UV Heatmap — Average Max UV by Month &amp; Year</h2>
+        <p class="card-desc">Darker orange = higher UV. Hover over a cell for the exact value.</p>
+      </div>
+      <!-- The heatmap is built as an HTML table by JavaScript -->
+      <div id="uvHeatmap" class="heatmap-wrap"></div>
+    </section>
+
+    <!-- ---- ROW 3: Cancer trend (two charts side by side) ---- -->
+    <section class="card-row">
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Melanoma Cases — Victoria</h2>
+          <div class="legend">
+            <span class="dot male"></span> Male
+            <span class="dot female"></span> Female
+            <span class="dot persons"></span> Persons
+          </div>
+        </div>
+        <canvas id="melanomaTrendChart"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Non-Melanoma Cases — Victoria</h2>
+          <div class="legend">
+            <span class="dot male"></span> Male
+            <span class="dot female"></span> Female
+            <span class="dot persons"></span> Persons
+          </div>
+        </div>
+        <canvas id="nonmelanomaTrendChart"></canvas>
+      </div>
+
+    </section>
+
+    <!-- ---- ROW 4: Age-standardised rate comparison ---- -->
+    <section class="card wide">
+      <div class="card-header">
+        <h2>Age-Standardised Rate Comparison (per 100,000)</h2>
+        <p class="card-desc">Comparing rates using 2001 ASP vs 2023 Australian Population standard.</p>
+      </div>
+      <canvas id="rateCompareChart"></canvas>
+    </section>
+
+    <!-- ---- ROW 5: UV distribution (box-like summary per year) ---- -->
+    <section class="card wide">
+      <div class="card-header">
+        <h2>UV Index Distribution — High UV Days per Year (UV ≥ 6)</h2>
+        <p class="card-desc">Number of days per year where the maximum UV index reached 6 or above (High risk level).</p>
+      </div>
+      <canvas id="uvHighDaysChart"></canvas>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Data sources: Cancer in Australia statistics (AIHW) &amp; Melbourne UV monitoring data. Dashboard built with Chart.js.</p>
+  </footer>
+
+  <!-- Load Chart.js library from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <!-- Load PapaParse for reading CSV files -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- Load our custom JavaScript logic -->
+  <script src="main.js"></script>
+
+</body>
+</html>

@@ -82,7 +82,7 @@ const notificationBody = computed(
   flex-direction: column;
   gap: 18px;
   padding: 18px 20px 32px;
-  max-width: 720px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
