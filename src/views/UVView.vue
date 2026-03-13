@@ -24,9 +24,11 @@
 
     <section class="uv-cta">
       <CTACard
-        title="Not sure what to wear today? See UV-smart clothing suggestions."
-        buttonText="Open clothing guide"
-        to="/clothing"
+        icon="☀️"
+        title="Do you know why high UV is dangerous?"
+        desc="See skin cancer trends and UV data across Australia"
+        buttonText="Learn more"
+        to="/awareness"
       />
     </section>
 

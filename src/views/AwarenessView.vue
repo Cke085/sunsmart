@@ -37,6 +37,13 @@
       <RateCompareChart class="block" />
       <UVHighDaysChart class="block" />
     </section>
+    <CTACard
+      icon="✅"
+      title="Now you know the risks — see what to wear today"
+      desc="Get UV-smart clothing recommendations based on your location"
+      buttonText="View clothing recommendations"
+      to="/clothing"
+    />
   </div>
 </template>
 
@@ -49,6 +56,7 @@ import MelanomaTrendChart from '@/components/awareness/MelanomaTrendChart.vue'
 import NonMelanomaTrendChart from '@/components/awareness/NonMelanomaTrendChart.vue'
 import RateCompareChart from '@/components/awareness/RateCompareChart.vue'
 import UVHighDaysChart from '@/components/awareness/UVHighDaysChart.vue'
+import CTACard from '@/components/shared/CTACard.vue'
 
 const UV_CSV = 'melbourne_daily_max_uv.csv'
 const CANCER_CSV = 'skin_cancer_victoria.csv'

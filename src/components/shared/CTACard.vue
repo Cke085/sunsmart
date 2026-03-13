@@ -12,6 +12,7 @@
   defineProps({
     icon: { type: String, default: '' },
     title: { type: String, required: true },
+    desc: { type: String, default: '' },
     buttonText: { type: String, required: true },
     to: { type: String, required: true },
   })

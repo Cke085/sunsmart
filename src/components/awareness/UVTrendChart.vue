@@ -82,11 +82,11 @@ const chartOptions = {
   plugins: {
     legend: { display: false },
     tooltip: {
-      backgroundColor: '#161b22',
-      borderColor: '#30363d',
+      backgroundColor: '#ffffff',
+      borderColor: '#e5e7eb',
       borderWidth: 1,
-      titleColor: '#0f172a',
-      bodyColor: '#1f2933',
+      titleColor: '#111827',
+      bodyColor: '#111827',
     },
   },
   scales: {
