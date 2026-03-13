@@ -40,6 +40,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { uvData } from '@/data/mock'
+import { location as sharedLocation } from '@/store/location'
 import ClothingRecommendations from '@/components/clothing/ClothingRecommendations.vue'
 import SunscreenRecommendation from '@/components/clothing/SunscreenRecommendation.vue'
 import AIDayPlanner from '@/components/clothing/AIDayPlanner.vue'
@@ -48,7 +49,7 @@ import CTACard from '@/components/shared/CTACard.vue'
 // Temporary: use mock UV data until backend is ready
 const uv = uvData
 const uvLevel = ref(uv.level)
-const location = ref(uv.location)
+const location = sharedLocation
 
 const uvCategory = computed(() => {
   if (uvLevel.value <= 2) return 'Low'
@@ -71,26 +72,28 @@ const uvBarClass = computed(() => {
 <style scoped>
 .clothing-page {
   min-height: 100vh;
-  background: #fafafa;
+  background: #ffffff;
 }
 
 .content {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 40px 24px;
+  padding: 32px 20px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .page-title {
   font-size: 32px;
   font-weight: 500;
   color: #1a1a1a;
-  margin-bottom: 6px;
+  margin: 0 0 6px;
 }
 
 .page-sub {
   font-size: 14px;
   color: #757575;
-  margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -114,7 +117,6 @@ const uvBarClass = computed(() => {
   border-radius: 8px;
   border: 0.5px solid;
   font-size: 14px;
-  margin-bottom: 36px;
 }
 
 .uv-dot {
