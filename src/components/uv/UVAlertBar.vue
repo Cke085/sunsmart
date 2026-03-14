@@ -22,8 +22,8 @@ defineProps({
 .alert {
   width: 100%;
   max-width: 760px;
-  background: #fff3e0;
-  border: 1px solid rgba(255, 152, 0, 0.35);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 14px 16px;
   display: flex;

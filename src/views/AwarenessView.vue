@@ -37,6 +37,13 @@
       <RateCompareChart class="block" />
       <UVHighDaysChart class="block" />
     </section>
+    <CTACard
+      icon="✅"
+      title="Now you know the risks — see what to wear today"
+      desc="Get UV-smart clothing recommendations based on your location"
+      buttonText="View clothing recommendations"
+      to="/clothing"
+    />
   </div>
 </template>
 
@@ -49,6 +56,7 @@ import MelanomaTrendChart from '@/components/awareness/MelanomaTrendChart.vue'
 import NonMelanomaTrendChart from '@/components/awareness/NonMelanomaTrendChart.vue'
 import RateCompareChart from '@/components/awareness/RateCompareChart.vue'
 import UVHighDaysChart from '@/components/awareness/UVHighDaysChart.vue'
+import CTACard from '@/components/shared/CTACard.vue'
 
 const UV_CSV = 'melbourne_daily_max_uv.csv'
 const CANCER_CSV = 'skin_cancer_victoria.csv'
@@ -106,18 +114,18 @@ onMounted(async () => {
 
 <style scoped>
 .uv-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 20px 36px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 18px 20px 32px;
-  max-width: 1200px;
-  margin: 0 auto;
+  gap: 24px;
 }
 
 .uv-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 
@@ -129,13 +137,13 @@ onMounted(async () => {
 
 .uv-title {
   margin: 0;
-  font-size: 26px;
-  font-weight: 800;
+  font-size: 32px;
+  font-weight: 500;
 }
 
 .uv-subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: rgba(0, 0, 0, 0.65);
 }
 
@@ -145,14 +153,13 @@ onMounted(async () => {
 
 .aw-stats {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 12px;
   justify-content: flex-end;
 }
 
 .stat-pill {
-  flex: 1 1 140px;
-  min-width: 140px;
+  flex: 0 0 auto;
   background: #fff7ed;
   border-radius: 12px;
   padding: 8px 14px;

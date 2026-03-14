@@ -15,24 +15,46 @@ A web-based UV awareness application built with Vue 3, helping young Australians
 ## Project Structure
 ```
 src/
-├── views/                   # One file per page
-│   ├── UVView.vue            # UV page (home)
-│   ├── AwarenessView.vue     # Awareness page
-│   └── ClothingView.vue      # Clothing page
+├── views/                         # One file per page
+│   ├── UVView.vue                 # Real-time UV page (home)
+│   ├── AwarenessView.vue          # Historical UV & cancer trends
+│   └── ClothingView.vue           # Clothing + sunscreen + AI planner
 │
 ├── components/
-│   ├── layout/
-│   │   └── NavBar.vue        # Top navigation bar
-│   ├── uv/                   # Components for UV page
-│   ├── awareness/            # Components for Awareness page
-│   ├── clothing/             # Components for Clothing page
-│   └── shared/               # Reusable components (e.g. CTACard)
+│   ├── uv/
+│   │   ├── UVScaleBar.vue         # Horizontal UV scale with thumb
+│   │   ├── UVAlertBar.vue         # Inline sunburn risk alert
+│   │   └── UVNotificationBanner.vue # Top-right UV notification banner
+│   ├── awareness/
+│   │   ├── UVTrendChart.vue       # Annual average max UV chart
+│   │   ├── UVHeatmap.vue
+│   │   ├── MelanomaTrendChart.vue
+│   │   ├── NonMelanomaTrendChart.vue
+│   │   ├── RateCompareChart.vue
+│   │   └── UVHighDaysChart.vue
+│   ├── clothing/
+│   │   ├── ClothingRecommendations.vue  # What to wear today
+│   │   ├── SunscreenRecommendation.vue  # SPF + 2‑hour reminder toast
+│   │   ├── AIDayPlanner.vue             # Structured AI day planner form
+│   │   └── clothingCard.vue             # Small card for each clothing item
+│   └── shared/
+        ├── NavBar.vue             # Top navigation bar
+│       └── CTACard.vue            # Reusable CTA card component
 │
 ├── data/
-│   └── mock.js               # Mock data (temporary, before backend)
+│   ├── mock.js                    # Mock UV + notification copy
+│   ├── clothing.js                # Clothing items + badges by UV
+│   └── sunburn.js                 # UV → sunburn risk index + time mapping
+│
+├── stores/
+│   ├── counter.js                 # Sample Pinia counter store (template)
+│   └── location.js                # Shared reactive location state
+│
+├── utils/
+│   └── parseCSV.js                # CSV helper for awareness charts
 │
 └── router/
-    └── index.js              # Page routing config
+    └── index.js                   # Page routing config
 ```
 
 ---

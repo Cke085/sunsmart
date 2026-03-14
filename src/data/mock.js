@@ -1,5 +1,5 @@
 export const uvData = {
-  level: 8,
+  level: 5,
   location: 'Melbourne',
   message: 'Apply sunscreen, seek shade when possible. Your skin may burn in 20 min.',
   notificationTitlePrefix: '🔥 Your UV level is',

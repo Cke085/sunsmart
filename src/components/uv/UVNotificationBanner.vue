@@ -43,6 +43,8 @@ const props = defineProps({
   clothingAdvice: { type: String, default: '' },
   autoShow: { type: Boolean, default: true },
   autoHideMs: { type: Number, default: 0 },
+  // When this number changes, the banner will re-show (used for location changes, etc.)
+  triggerKey: { type: Number, default: 0 },
 })
 
 const emit = defineEmits(['dismiss', 'navigate'])
@@ -93,6 +95,13 @@ watch(
     // When UV changes, re-show the banner briefly (if it was dismissed).
     if (props.autoShow) show()
   }
+)
+
+watch(
+  () => props.triggerKey,
+  () => {
+    if (props.autoShow) show()
+  },
 )
 </script>
 
