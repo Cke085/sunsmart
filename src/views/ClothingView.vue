@@ -1,7 +1,6 @@
 <template>
   <div class="clothing-page">
     <div class="content">
-
       <!-- Page header -->
       <h1 class="page-title">Recommended clothing</h1>
       <div class="page-sub">
@@ -32,18 +31,78 @@
         buttonText="Learn more"
         to="/awareness"
       />
-
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue' // 🌟 新增了 onMounted
-import { location as sharedLocation, setLocation } from '@/stores/location' // 引入了 setLocation 备用
+import { ref, computed, onMounted } from 'vue'
+import { location as sharedLocation, setLocation } from '@/stores/location'
 import ClothingRecommendations from '@/components/clothing/ClothingRecommendations.vue'
 import SunscreenRecommendation from '@/components/clothing/SunscreenRecommendation.vue'
 import AIDayPlanner from '@/components/clothing/AIDayPlanner.vue'
 import CTACard from '@/components/shared/CTACard.vue'
+
+const aiPlan = ref('')
+const loading = ref(false)
+
+const handleAISubmit = async (formData) => {
+  loading.value = true
+  aiPlan.value = ''
+
+  const prompt = `
+    You are a professional Sun Safety Expert in Australia. 
+    Current Situation:
+    - Location: ${location.value}
+    - Current UV Index: ${uvLevel.value}
+    
+    User Activity:
+    - Outdoor Duration: ${formData.outdoorDurationHours} hours
+    - Skin Type: ${formData.skinType}
+    
+    Task: 
+    Provide a personalized, professional sun-safety plan in 3-4 bullet points. 
+    Be specific about:
+    1. How often to reapply sunscreen based on the current UV ${uvLevel.value}.
+    2. Specific clothing items recommended for a ${formData.outdoorDurationHours}-hour stay.
+    3. A clear safety warning if their skin type (${formData.skinType}) is at high risk.
+    
+    Tone: Concise and protective. Use emojis for readability.
+  `
+
+  try {
+    const GEMINI_API_KEY = 'AIzaSyDnPoWlf2_kkgUEn9476MZJGq75w63UUpk'
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: prompt }]
+          }
+        ]
+      })
+    })
+
+    const data = await response.json()
+
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      aiPlan.value = data.candidates[0].content.parts[0].text
+    } else {
+      throw new Error('Invalid response from Gemini')
+    }
+  } catch (error) {
+    console.error('Gemini API Error:', error)
+    aiPlan.value =
+      'Could not reach the AI expert. Quick tip: Stay in shade and reapply SPF 50+ every 2 hours.'
+  } finally {
+    loading.value = false
+  }
+}
 
 const API_KEY = '197d431fa550c96a045c38749be83926'
 
@@ -52,7 +111,9 @@ const location = sharedLocation
 
 const fetchUVByCoords = async (lat, lon) => {
   try {
-    const res = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily,alerts&appid=${API_KEY}`)
+    const res = await fetch(
+      `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily,alerts&appid=${API_KEY}`
+    )
     const data = await res.json()
     if (data && data.current) {
       uvLevel.value = Math.round(data.current.uvi)
@@ -62,14 +123,13 @@ const fetchUVByCoords = async (lat, lon) => {
   }
 }
 
-
 const fetchUVByCity = async (cityName) => {
   try {
-
-    const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`)
+    const geoRes = await fetch(
+      `https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`
+    )
     const geoData = await geoRes.json()
     if (geoData && geoData.length > 0) {
-
       await fetchUVByCoords(geoData[0].lat, geoData[0].lon)
     }
   } catch (error) {
@@ -80,15 +140,16 @@ const fetchUVByCity = async (cityName) => {
 onMounted(() => {
   if (location.value && location.value.trim() !== '' && location.value !== 'Current Location') {
     fetchUVByCity(location.value)
-  } 
-  else if (navigator.geolocation) {
+  } else if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const lat = position.coords.latitude
         const lon = position.coords.longitude
-        
+
         try {
-          const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`)
+          const geoRes = await fetch(
+            `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`
+          )
           const geoData = await geoRes.json()
           if (geoData && geoData.length > 0) {
             setLocation(geoData[0].name)

@@ -1,9 +1,8 @@
 <template>
   <div class="uv-page">
-
     <UVNotificationBanner
       v-if="showNotification"
-      style="top: 90px !important; z-index: 100;"
+      style="top: 90px !important; z-index: 100"
       :uvLevel="uv.level"
       :title="notificationTitle"
       :uvReminder="notificationBody"
@@ -33,7 +32,12 @@
             :disabled="locating"
           />
         </div>
-        <button class="loc-btn" type="button" @click="showLocationPrompt = true" :disabled="locating">
+        <button
+          class="loc-btn"
+          type="button"
+          @click="showLocationPrompt = true"
+          :disabled="locating"
+        >
           {{ locating ? 'Loading...' : 'Update location' }}
         </button>
       </div>
@@ -68,10 +72,7 @@
     </section>
 
     <section>
-      <UVAlertBar
-        :title="sunburnTitle"
-        :message="sunburnMessage"
-      />
+      <UVAlertBar :title="sunburnTitle" :message="sunburnMessage" />
     </section>
 
     <section class="uv-cta">
@@ -82,7 +83,6 @@
         to="/awareness"
       />
     </section>
-
   </div>
 
   <Teleport to="body">
@@ -94,23 +94,15 @@
       <div class="loc-modal">
         <h3 class="loc-modal-title">Use your current location?</h3>
         <p class="loc-modal-text">
-          We&apos;ll ask your browser for permission to access your location so we can show
-          UV and sunburn risk for where you are. You can also type a suburb or postcode
-          instead if you prefer.
+          We&apos;ll ask your browser for permission to access your location so we can show UV and
+          sunburn risk for where you are. You can also type a suburb or postcode instead if you
+          prefer.
         </p>
         <div class="loc-modal-actions">
-          <button
-            type="button"
-            class="loc-modal-btn secondary"
-            @click="showLocationPrompt = false"
-          >
+          <button type="button" class="loc-modal-btn secondary" @click="showLocationPrompt = false">
             Not now
           </button>
-          <button
-            type="button"
-            class="loc-modal-btn primary"
-            @click="confirmLocate"
-          >
+          <button type="button" class="loc-modal-btn primary" @click="confirmLocate">
             Allow &amp; locate me
           </button>
         </div>
@@ -148,14 +140,16 @@ const bumpNotification = () => {
 }
 
 const fetchUVByCoords = async (lat, lon) => {
-  showNotification.value = false 
-  
+  showNotification.value = false
+
   try {
-    const res = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily,alerts&appid=${API_KEY}`)
+    const res = await fetch(
+      `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily,alerts&appid=${API_KEY}`
+    )
     const data = await res.json()
     if (data && data.current) {
       uv.level = Math.round(data.current.uvi)
-      
+
       if (uv.level >= 6) {
         showNotification.value = true
         bumpNotification()
@@ -172,29 +166,32 @@ const autoLocate = () => {
     editableLocation.value = ''
     return
   }
-  
+
   locating.value = true
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const lat = position.coords.latitude
       const lon = position.coords.longitude
-      
+
       try {
-        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`)
+        const geoRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`
+        )
         const geoData = await geoRes.json()
-        
+
         if (geoData && geoData.address) {
-          const preciseName = geoData.address.suburb || geoData.address.town || geoData.address.city || 'Unknown'
+          const preciseName =
+            geoData.address.suburb || geoData.address.town || geoData.address.city || 'Unknown'
           setLocation(preciseName)
           editableLocation.value = preciseName
         } else {
           setLocation('Unknown')
         }
-        
+
         await fetchUVByCoords(lat, lon)
       } catch (error) {
         console.error('API Error:', error)
-        setLocation('-') 
+        setLocation('-')
       } finally {
         locating.value = false
       }
@@ -204,8 +201,8 @@ const autoLocate = () => {
       setLocation('-')
       editableLocation.value = ''
       locating.value = false
-      
-      showLocationPrompt.value = false 
+
+      showLocationPrompt.value = false
     }
   )
 }
@@ -218,34 +215,40 @@ const confirmLocate = () => {
 const commitManualLocation = async () => {
   const trimmed = editableLocation.value.trim()
   if (!trimmed) return
-  
+
   locating.value = true
   try {
-    let lat, lon, resolvedName;
-    
+    let lat, lon, resolvedName
+
     const isPostcode = /^\d{4}$/.test(trimmed)
 
     if (isPostcode) {
-      const zipRes = await fetch(`https://api.openweathermap.org/geo/1.0/zip?zip=${trimmed},au&appid=${API_KEY}`)
+      const zipRes = await fetch(
+        `https://api.openweathermap.org/geo/1.0/zip?zip=${trimmed},au&appid=${API_KEY}`
+      )
       if (!zipRes.ok) throw new Error('Postcode not found')
-      
+
       const zipData = await zipRes.json()
       lat = zipData.lat
       lon = zipData.lon
-      
-      const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`)
+
+      const nomRes = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`
+      )
       const nomData = await nomRes.json()
-      
+
       if (nomData && nomData.address) {
-        resolvedName = nomData.address.suburb || nomData.address.town || nomData.address.city || zipData.name
+        resolvedName =
+          nomData.address.suburb || nomData.address.town || nomData.address.city || zipData.name
       } else {
-        resolvedName = zipData.name 
+        resolvedName = zipData.name
       }
-      
     } else {
-      const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${trimmed}&limit=1&appid=${API_KEY}`)
+      const geoRes = await fetch(
+        `https://api.openweathermap.org/geo/1.0/direct?q=${trimmed}&limit=1&appid=${API_KEY}`
+      )
       const geoData = await geoRes.json()
-      
+
       if (geoData && geoData.length > 0) {
         lat = geoData[0].lat
         lon = geoData[0].lon
@@ -258,16 +261,15 @@ const commitManualLocation = async () => {
     setLocation(resolvedName)
     editableLocation.value = resolvedName
     await fetchUVByCoords(lat, lon)
-
   } catch (error) {
     console.error('API Error:', error)
     if (!isInitialLoad.value) {
       alert('Location not found. Please try another suburb or valid postcode.')
     }
-    editableLocation.value = location.value === '-' ? '' : location.value 
+    editableLocation.value = location.value === '-' ? '' : location.value
   } finally {
     locating.value = false
-    isInitialLoad.value = false 
+    isInitialLoad.value = false
   }
 }
 
@@ -331,9 +333,8 @@ const notificationTitle = computed(() => {
   return `${prefix} ${uv.level}!`
 })
 
-const notificationBody = computed(() =>
-  uv.notificationBody ||
-  'Tap to see UV-safe clothing and sunscreen tips tailored to you.'
+const notificationBody = computed(
+  () => uv.notificationBody || 'Tap to see UV-safe clothing and sunscreen tips tailored to you.'
 )
 </script>
 
@@ -348,9 +349,22 @@ const notificationBody = computed(() =>
 }
 
 /* Header */
-.page-header { display: flex; flex-direction: column; gap: 4px; }
-.page-title { font-size: 32px; font-weight: 500; color: #1a1a1a; margin: 0; }
-.page-subtitle { font-size: 14px; color: #757575; margin: 0; }
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.page-title {
+  font-size: 32px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0;
+}
+.page-subtitle {
+  font-size: 14px;
+  color: #757575;
+  margin: 0;
+}
 
 /* UV card */
 .uv-card {
@@ -401,8 +415,13 @@ const notificationBody = computed(() =>
   cursor: pointer;
 }
 
-.loc-btn:hover:not(:disabled) { background: #f5f5f5; }
-.loc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.loc-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+.loc-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .loc-input {
   flex: 0 0 160px;
@@ -415,8 +434,10 @@ const notificationBody = computed(() =>
 .loc-input::placeholder {
   color: #bdbdbd;
 }
-.loc-input:disabled { background: #f9f9f9; opacity: 0.7; }
-
+.loc-input:disabled {
+  background: #f9f9f9;
+  opacity: 0.7;
+}
 
 .uv-number-row {
   display: flex;
@@ -446,13 +467,31 @@ const notificationBody = computed(() =>
   width: fit-content;
 }
 
-.badge-low      { background: #e8f5e9; color: #1b5e20; }
-.badge-moderate { background: #fffde7; color: #f57f17; }
-.badge-high     { background: #fff3e0; color: #bf360c; }
-.badge-vhigh    { background: #fce4ec; color: #880e4f; }
-.badge-extreme  { background: #f3e5f5; color: #4a148c; }
+.badge-low {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+.badge-moderate {
+  background: #fffde7;
+  color: #f57f17;
+}
+.badge-high {
+  background: #fff3e0;
+  color: #bf360c;
+}
+.badge-vhigh {
+  background: #fce4ec;
+  color: #880e4f;
+}
+.badge-extreme {
+  background: #f3e5f5;
+  color: #4a148c;
+}
 
-.uv-label { font-size: 13px; color: #9e9e9e; }
+.uv-label {
+  font-size: 13px;
+  color: #9e9e9e;
+}
 
 /* Stat cards */
 .stats-row {
@@ -470,9 +509,19 @@ const notificationBody = computed(() =>
   gap: 4px;
 }
 
-.stat-label { font-size: 12px; color: #757575; }
-.stat-val   { font-size: 20px; font-weight: 500; color: #1a1a1a; }
-.stat-sub   { font-size: 11px; color: #9e9e9e; }
+.stat-label {
+  font-size: 12px;
+  color: #757575;
+}
+.stat-val {
+  font-size: 20px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+.stat-sub {
+  font-size: 11px;
+  color: #9e9e9e;
+}
 
 /* CTA */
 .uv-cta {
@@ -481,10 +530,18 @@ const notificationBody = computed(() =>
 }
 
 @media (max-width: 600px) {
-  .uv-page { padding: 24px 16px; }
-  .page-title { font-size: 26px; }
-  .uv-number { font-size: 48px; }
-  .stats-row { grid-template-columns: 1fr; }
+  .uv-page {
+    padding: 24px 16px;
+  }
+  .page-title {
+    font-size: 26px;
+  }
+  .uv-number {
+    font-size: 48px;
+  }
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
 
   .loc-row {
     flex-direction: column;

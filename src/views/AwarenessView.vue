@@ -3,9 +3,7 @@
     <section class="uv-header">
       <div class="uv-header-left">
         <h1 class="uv-title">UV &amp; Skin Cancer Awareness</h1>
-        <p class="uv-subtitle">
-          Historical UV exposure and skin cancer trends for Victoria.
-        </p>
+        <p class="uv-subtitle">Historical UV exposure and skin cancer trends for Victoria.</p>
       </div>
 
       <div v-if="!statsError" class="aw-stats">
@@ -69,9 +67,7 @@ const round2 = (n) => Math.round(n * 100) / 100
 const avg = (arr) => (arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : 0)
 
 const avgUV = computed(() => {
-  const allUV = uvRows.value
-    .map((r) => parseFloat(r.UV_Index))
-    .filter((v) => !Number.isNaN(v))
+  const allUV = uvRows.value.map((r) => parseFloat(r.UV_Index)).filter((v) => !Number.isNaN(v))
   return round2(avg(allUV)) || 0
 })
 
@@ -87,7 +83,7 @@ const totalMelanoma = computed(() => {
     (r) =>
       r['Cancer group/site']?.trim() === 'Melanoma of the skin' &&
       r['Sex']?.trim() === 'Persons' &&
-      r['State or Territory']?.trim() === 'Victoria',
+      r['State or Territory']?.trim() === 'Victoria'
   )
   return melanoma.reduce((sum, row) => {
     const raw = (row['Count'] || '').replace(/,/g, '')
@@ -98,10 +94,7 @@ const totalMelanoma = computed(() => {
 
 onMounted(async () => {
   try {
-    const [uv, cancer] = await Promise.all([
-      parseCSV(UV_CSV),
-      parseCSV(CANCER_CSV),
-    ])
+    const [uv, cancer] = await Promise.all([parseCSV(UV_CSV), parseCSV(CANCER_CSV)])
     uvRows.value = uv
     cancerRows.value = cancer
   } catch (err) {

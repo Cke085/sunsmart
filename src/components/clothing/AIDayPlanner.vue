@@ -1,466 +1,330 @@
 <template>
-    <section class="section">
-      <div class="section-label">AI-powered</div>
-      <div class="section-title">Your AI day planner</div>
-      <div class="section-desc">
-        Tell us your plans and preferences — we'll build a personalised
-        UV protection schedule for your day.
+  <section class="section">
+    <div class="section-label">AI-powered</div>
+    <div class="section-title">Your AI day planner</div>
+    <div class="section-desc">
+      Tell us how long you'll be outside and your skin type — we'll build a personalised UV
+      protection schedule for your day.
+    </div>
+
+    <div class="ai-card">
+      <div class="ai-head">
+        <span class="ai-title">Generate my day plan</span>
       </div>
-  
-      <div class="ai-card">
-        <div class="ai-head">
-          <span class="ai-title">Generate my day plan</span>
-        </div>
-  
-        <!-- Time range + activity on one row -->
-        <div class="time-row">
-          <div class="form-col">
-            <label class="form-label">Going out at</label>
-            <input type="time" v-model="form.startTime" />
-          </div>
-          <div class="form-col">
-            <label class="form-label">Heading home at</label>
-            <input type="time" v-model="form.endTime" />
-          </div>
-          <div class="form-col form-col--wide">
-            <label class="form-label">What are you doing today?</label>
+
+      <div class="form-block">
+        <div class="slider-head">
+          <label class="form-label" style="margin-bottom: 0">
+            How many hours will you be outdoors?
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px">
             <input
-              class="activity-input"
-              v-model="form.activity"
-              placeholder="e.g. Morning run"
+              type="number"
+              v-model.number="form.duration"
+              min="1"
+              max="10"
+              style="
+                width: 55px;
+                padding: 6px;
+                border: 0.5px solid #e0e0e0;
+                border-radius: 8px;
+                text-align: center;
+                font-size: 14px;
+                background: #fafafa;
+              "
             />
+            <span class="slider-val">hrs</span>
           </div>
         </div>
-  
-        <!-- Activity location -->
-        <div class="form-block">
-          <label class="form-label">Activity location</label>
-          <div class="chip-group">
-            <span
-              v-for="loc in locationOptions"
-              :key="loc"
-              class="chip"
-              :class="{ active: form.location === loc }"
-              @click="form.location = loc"
-            >
-              {{ loc }}
-            </span>
-          </div>
+        <input type="range" min="1" max="10" step="1" v-model.number="form.duration" />
+        <div class="slider-ticks">
+          <span>1h</span>
+          <span>5h</span>
+          <span>10h</span>
         </div>
-  
-        <div class="divider" />
-  
-        <!-- Vitamin D slider -->
-        <div class="form-block">
-          <div class="slider-head">
-            <span class="form-label" style="margin-bottom: 0;">
-              Vitamin D exposure goal
-            </span>
-            <span class="slider-val">{{ form.vitaminD }} min</span>
-          </div>
-          <input
-            type="range"
-            min="5"
-            max="30"
-            step="5"
-            v-model="form.vitaminD"
-          />
-          <div class="slider-ticks">
-            <span>Minimal</span>
-            <span>Moderate</span>
-            <span>Maximum</span>
-          </div>
-        </div>
-  
-        <!-- Skin type -->
-        <div class="form-block">
-          <label class="form-label">Skin type</label>
-          <div class="skin-grid">
-            <div
-              v-for="skin in skinTypes"
-              :key="skin.type"
-              class="skin-card"
-              :class="{ active: form.skinType === skin.type }"
-              @click="form.skinType = skin.type"
-            >
-              <div
-                class="skin-swatch"
-                :style="{ background: skin.color }"
-              />
-              <span class="skin-name">{{ skin.type }}</span>
-              <span class="skin-desc">{{ skin.desc }}</span>
-              <span class="skin-burn">{{ skin.burn }}</span>
-            </div>
-          </div>
-        </div>
-  
-        <!-- Protection priority -->
-        <div class="form-block form-block-priority">
-          <label class="form-label">What matters most to you today?</label>
-          <div class="chip-group">
-            <span
-              v-for="p in priorityOptions"
-              :key="p"
-              class="chip"
-              :class="{ active: form.priority === p }"
-              @click="form.priority = p"
-            >
-              {{ p }}
-            </span>
-          </div>
-        </div>
-  
-        <!-- When backend is ready, this payload can be POSTed directly -->
-        <button class="generate-btn" type="button" @click="handleGenerate">
-          Generate my sun-safety plan
-        </button>
-  
       </div>
-    </section>
-  </template>
-  
+
+      <div class="divider" />
+
+      <div class="form-block">
+        <label class="form-label">Skin type</label>
+        <div class="skin-grid">
+          <div
+            v-for="skin in skinTypes"
+            :key="skin.type"
+            class="skin-card"
+            :class="{ active: form.skinType === skin.type }"
+            @click="form.skinType = skin.type"
+          >
+            <div class="skin-swatch" :style="{ background: skin.color }" />
+            <span class="skin-name">{{ skin.type }}</span>
+            <span class="skin-desc">{{ skin.desc }}</span>
+            <span class="skin-burn">{{ skin.burn }}</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="generate-btn" type="button" @click="handleGenerate" :disabled="loading">
+        {{ loading ? 'Analyzing UV patterns...' : 'Generate my sun-safety plan' }}
+      </button>
+
+      <div v-if="aiPlan" class="ai-result-box">
+        <div class="ai-result-header">
+          <span class="ai-icon">✨</span>
+          <span>Your Personalized Plan</span>
+        </div>
+        <div class="ai-result-text">{{ aiPlan }}</div>
+      </div>
+    </div>
+  </section>
+</template>
+
 <script setup>
-  import { ref } from 'vue'
-  
-  // Form state 
-  const form = ref({
-    startTime: '08:00',
-    endTime: '18:00',
-    activity: '',
-    location: 'Outdoors',
-    vitaminD: 15,
-    skinType: 'Type I',
-    priority: 'Max protection',
-  })
-  
-  const emit = defineEmits(['submit'])
-  
-  const handleGenerate = () => {
-    const payload = {
-      startTime: form.value.startTime,
-      endTime: form.value.endTime,
-      activity: form.value.activity,
-      location: form.value.location,
-      vitaminDMinutes: Number(form.value.vitaminD),
-      skinType: form.value.skinType,
-      priority: form.value.priority,
+import { ref } from 'vue'
+
+const form = ref({
+  duration: 2,
+  skinType: 'Type I'
+})
+
+const loading = ref(false)
+const aiPlan = ref('')
+
+const emit = defineEmits(['submit'])
+
+const handleGenerate = async () => {
+  if (form.value.duration < 1) form.value.duration = 1
+  if (form.value.duration > 10) form.value.duration = 10
+
+  loading.value = true
+  aiPlan.value = ''
+
+  const prompt = `Provide a sun-safety plan for Skin Type ${form.value.skinType}, outdoor duration ${form.value.duration} hours. Use emojis.`
+
+  try {
+    const API_KEY = 'AIzaSyDnPoWlf2_kkgUEn9476MZJGq75w63UUpk'.trim()
+
+    console.log('Checking available models...')
+    const listUrl = `https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`
+    const listRes = await fetch(listUrl)
+    const listData = await listRes.json()
+
+    if (!listRes.ok) {
+      throw new Error(`API Key error: ${listData.error?.message || 'Invalid Key'}`)
     }
-  
-    // For now: just emit up and log; backend can hook into `submit`
-    emit('submit', payload)
-    // eslint-disable-next-line no-console
-    console.log('AI day planner payload', payload)
-  }
-  
-  // Location chip options
-  const locationOptions = [
-    'Outdoors',
-    'Indoors',
-    'Mixed',
-    'Near water',
-    'High altitude',
-  ]
-  
-  // Priority chip options
-  const priorityOptions = [
-    'Max protection',
-    'Balance UV + vitamin D',
-    'Stay cool',
-    'Sport / active',
-  ]
-  
-  // Skin type data — based on Fitzpatrick scale
-  const skinTypes = [
-    {
-      type: 'Type I',
-      color: '#FDDBB4',
-      desc: 'Very fair, freckles common',
-      burn: 'Always burns, never tans',
-    },
-    {
-      type: 'Type II',
-      color: '#F5C896',
-      desc: 'Fair, light eyes or hair',
-      burn: 'Usually burns, tans minimally',
-    },
-    {
-      type: 'Type III',
-      color: '#D4956A',
-      desc: 'Medium, olive undertone',
-      burn: 'Sometimes burns, tans gradually',
-    },
-    {
-      type: 'Type IV',
-      color: '#A0623A',
-      desc: 'Olive to light brown',
-      burn: 'Rarely burns, tans easily',
-    },
-    {
-      type: 'Type V–VI',
-      color: '#5C3317',
-      desc: 'Brown to dark brown',
-      burn: 'Very rarely burns, tans deeply',
-    },
-  ]
-  </script>
-  
-  <style scoped>
-  .section {
-    margin-bottom: 40px;
-  }
-  
-  .section-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: #9e9e9e;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 14px;
-  }
-  
-  .section-title {
-    font-size: 20px;
-    font-weight: 500;
-    color: #1a1a1a;
-    margin-bottom: 4px;
-  }
-  
-  .section-desc {
-    font-size: 13px;
-    color: #757575;
-    margin-bottom: 20px;
-    line-height: 1.6;
-  }
-  
-  .ai-card {
-    background: #ffffff;
-    border: 0.5px dashed #bdbdbd;
-    border-radius: 12px;
-    padding: 24px;
-  }
-  
-  .ai-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 22px;
-  }
-  
-  .ai-title {
-    font-size: 15px;
-    font-weight: 500;
-    color: #1a1a1a;
-  }
-  
-  .ai-badge {
-    font-size: 11px;
-    padding: 3px 8px;
-    background: #f5f5f5;
-    border: 0.5px solid #e0e0e0;
-    border-radius: 20px;
-    color: #9e9e9e;
-  }
-  
-  /* Time row */
-  .time-row {
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
-    margin-bottom: 16px;
-    flex-wrap: nowrap;
-    align-items: flex-start;
-  }
-  
-  .form-col {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    flex: 0 0 auto;
-  }
 
-  .form-col--wide {
-    flex: 1 1 auto;
-  }
-  
-  .form-label {
-    font-size: 12px;
-    color: #757575;
-    margin-bottom: 6px;
-    display: block;
-  }
-  
-  .time-row input {
-    padding: 9px 10px;
-    border: 0.5px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 14px;
-    background: #fafafa;
-    color: #1a1a1a;
-    width: auto;
-    min-width: 120px;
-    max-width: 150px;
-  }
-  
-  /* Activity input */
-  .activity-input {
-    width: 100%;
-    padding: 9px 12px;
-    border: 0.5px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 14px;
-    background: #fafafa;
-    color: #1a1a1a;
-  }
-  
-  .activity-input::placeholder {
-    color: #bdbdbd;
-  }
-  
-  /* Chips */
-  .chip-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+    const availableModels = listData.models || []
+    console.log('Available models:', availableModels)
 
-  .form-block-priority {
-    margin-top: 12px;
+    const targetModel =
+      availableModels.find((m) => m.name.includes('flash'))?.name ||
+      availableModels.find((m) => m.name.includes('pro'))?.name
+
+    if (!targetModel) {
+      throw new Error('No compatible Gemini models found in your account.')
+    }
+
+    console.log(`🚀 Using the latest model found: ${targetModel}`)
+
+    const generateUrl = `https://generativelanguage.googleapis.com/v1/${targetModel}:generateContent?key=${API_KEY}`
+
+    const response = await fetch(generateUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    })
+
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error?.message || 'Generation failed')
+
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      aiPlan.value = data.candidates[0].content.parts[0].text
+    }
+  } catch (error) {
+    console.error('Diagnostic Error:', error)
+    aiPlan.value = `Access failed: ${error.message}. Please check your network or try again later.`
+  } finally {
+    loading.value = false
   }
-  
-  .chip {
-    padding: 6px 13px;
-    border-radius: 20px;
-    font-size: 12px;
-    border: 0.5px solid #e0e0e0;
-    background: #fafafa;
-    color: #757575;
-    cursor: pointer;
-    transition: all 0.15s;
+}
+
+const skinTypes = [
+  { type: 'Type I', color: '#FDDBB4', desc: 'Very fair', burn: 'Always burns' },
+  { type: 'Type II', color: '#F5C896', desc: 'Fair', burn: 'Usually burns' },
+  { type: 'Type III', color: '#D4956A', desc: 'Medium', burn: 'Sometimes burns' },
+  { type: 'Type IV', color: '#A0623A', desc: 'Olive', burn: 'Rarely burns' },
+  { type: 'Type V–VI', color: '#5C3317', desc: 'Brown', burn: 'Very rarely burns' }
+]
+</script>
+
+<style scoped>
+.section {
+  margin-bottom: 40px;
+}
+.section-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9e9e9e;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  letter-spacing: 0.08em;
+}
+.section-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+.section-desc {
+  font-size: 13px;
+  color: #757575;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.ai-card {
+  background: #ffffff;
+  border: 0.5px dashed #bdbdbd;
+  border-radius: 12px;
+  padding: 24px;
+}
+.ai-head {
+  margin-bottom: 22px;
+}
+.ai-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+.form-block {
+  margin-bottom: 20px;
+}
+.form-label {
+  font-size: 12px;
+  color: #757575;
+  margin-bottom: 6px;
+  display: block;
+}
+.divider {
+  height: 0.5px;
+  background: #f0f0f0;
+  margin: 4px 0 20px;
+}
+.slider-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.slider-val {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+input[type='range'] {
+  width: 100%;
+  cursor: pointer;
+}
+.slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #bdbdbd;
+  margin-top: 4px;
+}
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+.skin-card {
+  border: 0.5px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 12px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+  background: #ffffff;
+}
+.skin-card.active {
+  border: 2px solid #1a1a1a;
+  background: #fafafa;
+}
+.skin-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+.skin-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.skin-desc,
+.skin-burn {
+  font-size: 9px;
+  color: #9e9e9e;
+  text-align: center;
+  line-height: 1.2;
+}
+.generate-btn {
+  width: 100%;
+  padding: 12px;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: opacity 0.2s;
+}
+.generate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ai-result-box {
+  margin-top: 24px;
+  padding: 18px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border-left: 4px solid #1a1a1a;
+  animation: fadeIn 0.4s ease-out;
+}
+.ai-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: #1a1a1a;
+}
+.ai-result-text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #444;
+  white-space: pre-line;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  
-  .chip.active {
-    background: #1a1a1a;
-    color: #ffffff;
-    border-color: #1a1a1a;
-  }
-  
-  /* Divider */
-  .divider {
-    height: 0.5px;
-    background: #f0f0f0;
-    margin: 4px 0 20px;
-  }
-  
-  /* Vitamin D slider */
-  .slider-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  
-  .slider-val {
-    font-size: 12px;
-    font-weight: 500;
-    color: #1a1a1a;
-  }
-  
-  input[type='range'] {
-    width: 100%;
-  }
-  
-  .slider-ticks {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: #bdbdbd;
-    margin-top: 4px;
-  }
-  
-  /* Skin type grid */
-  .skin-grid {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
-  }
-  
-  .skin-card {
-    border: 0.5px solid #e0e0e0;
-    border-radius: 12px;
-    padding: 12px 8px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.15s;
-    background: #ffffff;
-  }
-  
-  .skin-card:hover {
-    border-color: #bdbdbd;
-  }
-  
-  .skin-card.active {
-    border: 2px solid #1a1a1a;
-  }
-  
-  .skin-swatch {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 0.5px solid rgba(0, 0, 0, 0.08);
-    flex-shrink: 0;
-  }
-  
-  .skin-name {
-    font-size: 12px;
-    font-weight: 500;
-    color: #1a1a1a;
-    text-align: center;
-  }
-  
-  .skin-desc {
-    font-size: 11px;
-    color: #757575;
-    text-align: center;
-    line-height: 1.4;
-  }
-  
-  .skin-burn {
-    font-size: 10px;
-    color: #bdbdbd;
-    text-align: center;
-    line-height: 1.3;
-  }
-  
-  /* Generate button */
-  .generate-btn {
-    width: 100%;
-    padding: 11px;
-    background: #1a1a1a;
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
+  to {
     opacity: 1;
-    margin-top: 20px;
+    transform: translateY(0);
   }
-
-  .generate-btn:hover {
-    opacity: 0.9;
+}
+@media (max-width: 600px) {
+  .skin-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  
-  @media (max-width: 600px) {
-    .skin-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  
-    .time-row {
-      flex-direction: column;
-      gap: 12px;
-    }
-  }
-  </style>
+}
+</style>

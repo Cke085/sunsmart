@@ -14,7 +14,7 @@ defineProps({
   // Title and message content are provided by the parent (e.g. from mock data or API).
   // Defaults are empty to avoid hard-coded copy in this presentational component.
   title: { type: String, default: '' },
-  message: { type: String, default: '' },
+  message: { type: String, default: '' }
 })
 </script>
 
