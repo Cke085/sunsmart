@@ -38,18 +38,73 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { uvData } from '@/data/mock'
-import { location as sharedLocation } from '@/stores/location'
+import { ref, computed, onMounted } from 'vue' // 🌟 新增了 onMounted
+import { location as sharedLocation, setLocation } from '@/stores/location' // 引入了 setLocation 备用
 import ClothingRecommendations from '@/components/clothing/ClothingRecommendations.vue'
 import SunscreenRecommendation from '@/components/clothing/SunscreenRecommendation.vue'
 import AIDayPlanner from '@/components/clothing/AIDayPlanner.vue'
 import CTACard from '@/components/shared/CTACard.vue'
 
-// Temporary: use mock UV data until backend is ready
-const uv = uvData
-const uvLevel = ref(uv.level)
+const API_KEY = '197d431fa550c96a045c38749be83926'
+
+const uvLevel = ref(0)
 const location = sharedLocation
+
+const fetchUVByCoords = async (lat, lon) => {
+  try {
+    const res = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily,alerts&appid=${API_KEY}`)
+    const data = await res.json()
+    if (data && data.current) {
+      uvLevel.value = Math.round(data.current.uvi)
+    }
+  } catch (error) {
+    console.error('Failed to acquire UV data:', error)
+  }
+}
+
+
+const fetchUVByCity = async (cityName) => {
+  try {
+
+    const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`)
+    const geoData = await geoRes.json()
+    if (geoData && geoData.length > 0) {
+
+      await fetchUVByCoords(geoData[0].lat, geoData[0].lon)
+    }
+  } catch (error) {
+    console.error('Failed to retrieve city coordinates:', error)
+  }
+}
+
+onMounted(() => {
+  if (location.value && location.value.trim() !== '' && location.value !== 'Current Location') {
+    fetchUVByCity(location.value)
+  } 
+  else if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude
+        const lon = position.coords.longitude
+        
+        try {
+          const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`)
+          const geoData = await geoRes.json()
+          if (geoData && geoData.length > 0) {
+            setLocation(geoData[0].name)
+          }
+        } catch (e) {
+          console.error(e)
+        }
+
+        fetchUVByCoords(lat, lon)
+      },
+      (error) => {
+        console.error('Location failed', error)
+      }
+    )
+  }
+})
 
 const uvCategory = computed(() => {
   if (uvLevel.value <= 2) return 'Low'

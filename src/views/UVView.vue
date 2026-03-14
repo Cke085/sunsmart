@@ -1,8 +1,9 @@
 <template>
   <div class="uv-page">
 
-    <!-- Notification stays top-right via existing component -->
     <UVNotificationBanner
+      v-if="showNotification"
+      style="top: 90px !important; z-index: 100;"
       :uvLevel="uv.level"
       :title="notificationTitle"
       :uvReminder="notificationBody"
@@ -12,13 +13,11 @@
       :triggerKey="notificationTrigger"
     />
 
-    <!-- Page header -->
     <section class="page-header">
       <h1 class="page-title">Real-time UV</h1>
       <p class="page-subtitle">Real-time UV intensity alerts based on your location.</p>
     </section>
 
-    <!-- UV main card -->
     <section class="uv-card">
       <div class="loc-row">
         <div class="loc-left">
@@ -31,10 +30,11 @@
             placeholder="Suburb or postcode"
             @blur="commitManualLocation"
             @keyup.enter="commitManualLocation"
+            :disabled="locating"
           />
         </div>
-        <button class="loc-btn" type="button" @click="showLocationPrompt = true">
-          {{ locating ? 'Locating...' : 'Update location' }}
+        <button class="loc-btn" type="button" @click="showLocationPrompt = true" :disabled="locating">
+          {{ locating ? 'Loading...' : 'Update location' }}
         </button>
       </div>
 
@@ -49,7 +49,6 @@
       <UVScaleBar :uvLevel="uv.level" />
     </section>
 
-    <!-- Stat cards -->
     <section class="stats-row">
       <div class="stat-card">
         <span class="stat-label">Sunburn risk</span>
@@ -68,7 +67,6 @@
       </div>
     </section>
 
-    <!-- Alert bar -->
     <section>
       <UVAlertBar
         :title="sunburnTitle"
@@ -76,7 +74,6 @@
       />
     </section>
 
-    <!-- CTA — unchanged -->
     <section class="uv-cta">
       <CTACard
         icon="☀️"
@@ -88,7 +85,6 @@
 
   </div>
 
-  <!-- Location privacy / permission modal -->
   <Teleport to="body">
     <div
       v-if="showLocationPrompt"
@@ -124,8 +120,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { uvData } from '@/data/mock'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { getSunburnInfo } from '@/data/sunburn'
 import { location as sharedLocation, setLocation } from '@/stores/location'
 import UVScaleBar from '@/components/uv/UVScaleBar.vue'
@@ -133,30 +128,84 @@ import UVAlertBar from '@/components/uv/UVAlertBar.vue'
 import UVNotificationBanner from '@/components/uv/UVNotificationBanner.vue'
 import CTACard from '@/components/shared/CTACard.vue'
 
-const uv = uvData
+const API_KEY = '197d431fa550c96a045c38749be83926'
+
+const uv = reactive({
+  level: 0,
+  notificationTitlePrefix: 'Your UV level is',
+  notificationBody: 'Tap to see UV-safe clothing and sunscreen tips tailored to you.'
+})
+
 const location = sharedLocation
 const locating = ref(false)
 const notificationTrigger = ref(0)
 const showLocationPrompt = ref(false)
 const editableLocation = ref(location.value)
+const showNotification = ref(false)
 
 const bumpNotification = () => {
   notificationTrigger.value += 1
 }
 
+const fetchUVByCoords = async (lat, lon) => {
+  showNotification.value = false 
+  
+  try {
+    const res = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily,alerts&appid=${API_KEY}`)
+    const data = await res.json()
+    if (data && data.current) {
+      uv.level = Math.round(data.current.uvi)
+      
+      if (uv.level >= 6) {
+        showNotification.value = true
+        bumpNotification()
+      }
+    }
+  } catch (error) {
+    console.error('Failed to acquire UV data:', error)
+  }
+}
+
 const autoLocate = () => {
-  if (!navigator.geolocation) return
+  if (!navigator.geolocation) {
+    setLocation('-')
+    editableLocation.value = ''
+    return
+  }
+  
   locating.value = true
   navigator.geolocation.getCurrentPosition(
-    () => {
-      // TODO: pass coordinates to API to get city name
-      setLocation('Current Location')
-      locating.value = false
-      bumpNotification()
+    async (position) => {
+      const lat = position.coords.latitude
+      const lon = position.coords.longitude
+      
+      try {
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`)
+        const geoData = await geoRes.json()
+        
+        if (geoData && geoData.address) {
+          const preciseName = geoData.address.suburb || geoData.address.town || geoData.address.city || 'Unknown'
+          setLocation(preciseName)
+          editableLocation.value = preciseName
+        } else {
+          setLocation('Unknown')
+        }
+        
+        await fetchUVByCoords(lat, lon)
+      } catch (error) {
+        console.error('API Error:', error)
+        setLocation('-') 
+      } finally {
+        locating.value = false
+      }
     },
-    () => {
-      alert('Unable to detect location. Please allow location access.')
+    (error) => {
+      console.warn('The user denied location access or location services failed:', error)
+      setLocation('-')
+      editableLocation.value = ''
       locating.value = false
+      
+      showLocationPrompt.value = false 
     }
   )
 }
@@ -166,12 +215,71 @@ const confirmLocate = () => {
   autoLocate()
 }
 
-const commitManualLocation = () => {
+const commitManualLocation = async () => {
   const trimmed = editableLocation.value.trim()
   if (!trimmed) return
-  setLocation(trimmed)
-  bumpNotification()
+  
+  locating.value = true
+  try {
+    let lat, lon, resolvedName;
+    
+    const isPostcode = /^\d{4}$/.test(trimmed)
+
+    if (isPostcode) {
+      const zipRes = await fetch(`https://api.openweathermap.org/geo/1.0/zip?zip=${trimmed},au&appid=${API_KEY}`)
+      if (!zipRes.ok) throw new Error('Postcode not found')
+      
+      const zipData = await zipRes.json()
+      lat = zipData.lat
+      lon = zipData.lon
+      
+      const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`)
+      const nomData = await nomRes.json()
+      
+      if (nomData && nomData.address) {
+        resolvedName = nomData.address.suburb || nomData.address.town || nomData.address.city || zipData.name
+      } else {
+        resolvedName = zipData.name 
+      }
+      
+    } else {
+      const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${trimmed}&limit=1&appid=${API_KEY}`)
+      const geoData = await geoRes.json()
+      
+      if (geoData && geoData.length > 0) {
+        lat = geoData[0].lat
+        lon = geoData[0].lon
+        resolvedName = geoData[0].name
+      } else {
+        throw new Error('City not found')
+      }
+    }
+
+    setLocation(resolvedName)
+    editableLocation.value = resolvedName
+    await fetchUVByCoords(lat, lon)
+
+  } catch (error) {
+    console.error('API Error:', error)
+    if (!isInitialLoad.value) {
+      alert('Location not found. Please try another suburb or valid postcode.')
+    }
+    editableLocation.value = location.value === '-' ? '' : location.value 
+  } finally {
+    locating.value = false
+    isInitialLoad.value = false 
+  }
 }
+
+const isInitialLoad = ref(true)
+
+onMounted(() => {
+  if (!editableLocation.value || editableLocation.value === '-') {
+    autoLocate()
+  } else {
+    commitManualLocation()
+  }
+})
 
 const uvCategory = computed(() => {
   const v = uv.level
@@ -182,7 +290,6 @@ const uvCategory = computed(() => {
   return 'Extreme'
 })
 
-// Badge colour based on UV level (single class string)
 const badgeColorClass = computed(() => {
   const v = uv.level
   if (v <= 2) return 'badge-low'
@@ -192,7 +299,6 @@ const badgeColorClass = computed(() => {
   return 'badge-extreme'
 })
 
-// Stat card sub-text
 const sunburnSub = computed(() => {
   if (uv.level <= 2) return 'Minimal risk right now'
   if (uv.level <= 5) return 'Protection recommended'
@@ -201,7 +307,6 @@ const sunburnSub = computed(() => {
   return 'Maximum protection needed'
 })
 
-// Safe time outdoors without protection
 const safeTime = computed(() => {
   if (uv.level <= 2) return '60+ min'
   if (uv.level <= 5) return '~30 min'
@@ -296,7 +401,8 @@ const notificationBody = computed(() =>
   cursor: pointer;
 }
 
-.loc-btn:hover { background: #f5f5f5; }
+.loc-btn:hover:not(:disabled) { background: #f5f5f5; }
+.loc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .loc-input {
   flex: 0 0 160px;
@@ -309,6 +415,8 @@ const notificationBody = computed(() =>
 .loc-input::placeholder {
   color: #bdbdbd;
 }
+.loc-input:disabled { background: #f9f9f9; opacity: 0.7; }
+
 
 .uv-number-row {
   display: flex;
