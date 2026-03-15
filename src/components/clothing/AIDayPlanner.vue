@@ -102,7 +102,7 @@ const handleGenerate = async () => {
   const prompt = `Provide a sun-safety plan for Skin Type ${form.value.skinType}, outdoor duration ${form.value.duration} hours. Use emojis.`
 
   try {
-    const API_KEY = 'AIzaSyDnPoWlf2_kkgUEn9476MZJGq75w63UUpk'.trim()
+    const API_KEY = import.meta.env.VITE_GEMINI_KEY
 
     console.log('Checking available models...')
     const listUrl = `https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`

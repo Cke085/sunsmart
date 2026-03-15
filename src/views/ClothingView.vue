@@ -71,7 +71,7 @@ const handleAISubmit = async (formData) => {
   `
 
   try {
-    const GEMINI_API_KEY = 'AIzaSyDnPoWlf2_kkgUEn9476MZJGq75w63UUpk'
+    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_KEY
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`
 
     const response = await fetch(url, {

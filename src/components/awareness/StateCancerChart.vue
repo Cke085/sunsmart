@@ -12,21 +12,17 @@ const myChart = shallowRef(null)
 
 const updateChart = () => {
   if (!myChart.value || !props.data) return
-  const sorted = [...props.data].sort((a, b) => a.year - b.year)
+  const sorted = [...props.data].sort((a, b) => b.rate - a.rate)
   myChart.value.setOption({
-    title: { text: 'UV Index Trend', left: 'center' },
-    tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: sorted.map((i) => i.year), name: 'Year' },
-    yAxis: { type: 'value', name: 'Avg UV' },
-    series: [
-      {
-        data: sorted.map((i) => i.avg_uv),
-        type: 'line',
-        smooth: true,
-        itemStyle: { color: '#f97316' },
-        areaStyle: { color: 'rgba(249, 115, 22, 0.1)' }
-      }
-    ]
+    title: { text: 'Cancer Rate by State', left: 'center' },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    xAxis: {
+      type: 'category',
+      data: sorted.map((i) => i.state_or_territory),
+      axisLabel: { rotate: 30 }
+    },
+    yAxis: { type: 'value', name: 'Rate per 100k' },
+    series: [{ data: sorted.map((i) => i.rate), type: 'bar', itemStyle: { color: '#f97316' } }]
   })
 }
 

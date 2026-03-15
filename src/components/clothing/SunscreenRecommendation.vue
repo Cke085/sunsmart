@@ -30,7 +30,7 @@
         </button>
       </div>
 
-      <div v-if="isDev" class="dev-helper-row">
+      <div class="dev-helper-row">
         <button class="dev-helper-btn" type="button" @click="reminderStore.triggerReminderNow">
           Show reminder banner now (demo only)
         </button>
@@ -53,7 +53,6 @@ const props = defineProps({
 })
 
 const reminderStore = useReminderStore()
-const isDev = import.meta.env.DEV
 
 const spf = computed(() => (props.uvLevel >= 6 ? 'SPF 50+' : 'SPF 30+'))
 const reapply = computed(() => (props.uvLevel >= 8 ? 'Every 90 minutes' : 'Every 2 hours'))
